@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">Bluetooth Remote Control</string>
+    <string name="action_connect">Connect</string>
+    <string name="action_unbind">Unbind</string>
+    <string name="action_export">Export to CSV</string>
+    <string name="action_import">Import from CSV</string>
+    <string name="action_terminal">Terminal</string>
+    <string name="add_dialog_title">Add new code</string>
+    <string name="manual_input">Manual input</string>
+    <string name="edit_code">Edit code</string>
+    <string name="code_desc">Description</string>
+    <string name="code_name">Code name</string>
+    <string name="code_type">Code type (optional)</string>
+    <string name="code">Code</string>
+    <string name="add">Add</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="add_from_device">From device</string>
+    <string name="add_manual">Manual (expert)</string>
+    <string name="context_send10">Send +10</string>
+    <string name="context_edit">Edit</string>
+    <string name="context_remove">Remove</string>
+    <string name="title_activity_received_codes">Received codes</string>
+    <string name="title_activity_terminal">Terminal</string>
+    <string name="button_send">Send</string>
+    <string name="received_at">Received: </string>
+
+
+</resources>
