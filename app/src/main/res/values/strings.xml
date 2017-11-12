@@ -25,5 +25,6 @@
     <string name="button_send">Send</string>
     <string name="received_at">Received: </string>
 
+    <string name="cannot_create_dir">Cannot create directory</string>
 
 </resources>

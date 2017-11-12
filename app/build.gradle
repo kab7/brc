@@ -24,6 +24,6 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:27.0.0'
     compile 'com.android.support:design:27.0.0'
-    compile 'net.sf.opencsv:opencsv:2.3'
+    compile 'net.sf.opencsv:opencsv:2.4'
     implementation 'com.akexorcist:bluetoothspp:1.0.0'
 }

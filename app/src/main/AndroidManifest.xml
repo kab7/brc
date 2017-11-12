@@ -2,10 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="ru.kapu.bluetoothremotecontrol">
 
-<!--    <activity android:name="app.akexorcist.bluetoothspp.DeviceList" /> -->
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:name=".MyApp"
@@ -43,6 +44,8 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="ru.kapu.bluetoothremotecontrol.MainActivity" />
         </activity>
+
+        <activity android:name="app.akexorcist.bluetoothspp.DeviceList" />
 
     </application>
 

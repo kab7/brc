@@ -1,19 +1,26 @@
 package ru.kapu.bluetoothremotecontrol;
 
+import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.HapticFeedbackConstants;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.Menu;
@@ -28,6 +35,9 @@ import java.util.ArrayList;
 import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 import app.akexorcist.bluetotohspp.library.BluetoothState;
 import app.akexorcist.bluetotohspp.library.DeviceList;
+
+import static android.os.VibrationEffect.DEFAULT_AMPLITUDE;
+import static android.view.HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING;
 
 public class MainActivity extends AppCompatActivity
     implements AddNewDialog.NoticeAddNewDialogListener,
@@ -49,6 +59,11 @@ public class MainActivity extends AppCompatActivity
     String last_command;
     Integer last_code_id;
     ArrayList<String> codes_list;
+
+    //! permissions
+    private int grantResults[];
+    private static final int REQUEST_WRITE_PERMISSIONS = 1;
+    private static final int REQUEST_READ_PERMISSIONS = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,6 +108,7 @@ public class MainActivity extends AppCompatActivity
         lvMain.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Integer code_id = (Integer) view.getTag();
+                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
                 SendCode(code_id, 1);
             }
         });
@@ -320,6 +336,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        info.targetView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
         switch(item.getItemId()) {
             case R.id.context_send10:
                 Integer code_id = (Integer) info.targetView.getTag();
@@ -395,21 +412,35 @@ public class MainActivity extends AppCompatActivity
         //! Export to CSV
         if (id == R.id.action_export)
         {
-            String msg=mydb.ExportToCSV();
-            Snackbar.make(findViewById(R.id.lvMain), msg, Snackbar.LENGTH_SHORT).setAction("Action", null).show();
+            //! Request permission to write to external storage
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED )
+            {
+                //if you dont have required permissions ask for it (only required for API 23+)
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_PERMISSIONS);
+            }
+            else
+            {
+                //! we have permissions, do export
+                ExportToCSV();
+            }
+
             return true;
         }
 
         //! Import from CSV
-        if (id == R.id.action_import) {
-            new FileChooser(this).setFileListener(new FileChooser.FileSelectedListener() {
-                                                      @Override
-                                                      public void fileSelected(final File file) {
-                                                          // do something with the file
-                                                          Snackbar.make(findViewById(R.id.lvMain), file.getAbsolutePath(), Snackbar.LENGTH_SHORT).setAction("Action", null).show();
-                                                      }
-                                                  }
-            ).showDialog();
+        if (id == R.id.action_import)
+        {
+            //! Request permission to write to external storage
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED )
+            {
+                //if you dont have required permissions ask for it (only required for API 23+)
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_READ_PERMISSIONS);
+            }
+            else
+            {
+                //! we have permissions, do export
+                ImportFromCSV();
+            }
             return true;
         }
 
@@ -427,6 +458,94 @@ public class MainActivity extends AppCompatActivity
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void ExportToCSV() {
+        String msg;
+
+        if (isExternalStorageWritable()) {
+            msg = mydb.ExportToCSV();
+        } else {
+            msg = "External storage is not writable";
+        }
+
+        Snackbar.make(findViewById(R.id.lvMain), msg, Snackbar.LENGTH_SHORT).setAction("Action", null).show();
+    }
+
+    public void ImportFromCSV() {
+        String msg;
+
+        if (isExternalStorageReadable()) {
+            msg = mydb.ImportFromCSV();
+        } else {
+            msg = "External storage is not readable";
+        }
+
+        //! update listview
+        codes_adapter.changeCursor(mydb.GetAllCodes());
+
+        Snackbar.make(findViewById(R.id.lvMain), msg, Snackbar.LENGTH_SHORT).setAction("Action", null).show();
+    }
+
+    @Override // android recommended class to handle permissions
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_WRITE_PERMISSIONS: {
+
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    Log.d("permission", "granted");
+                    ExportToCSV();
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.uujm
+                    Toast.makeText(MainActivity.this, "Permission denied to read your External storage", Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
+            case REQUEST_READ_PERMISSIONS: {
+
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    Log.d("permission", "granted");
+                    ImportFromCSV();
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.uujm
+                    Toast.makeText(MainActivity.this, "Permission denied to read your External storage", Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
+
+            // other 'case' line to check for other
+            // permissions this app might request
+        }
+    }
+
+    /* Checks if external storage is available for read and write */
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+
+    /* Checks if external storage is available to at least read */
+    public boolean isExternalStorageReadable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state) ||
+                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            return true;
+        }
+        return false;
     }
 
     @Override

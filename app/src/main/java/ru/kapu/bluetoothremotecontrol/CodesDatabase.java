@@ -9,9 +9,12 @@ import android.os.Environment;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 
+import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 
 /**
@@ -119,10 +122,14 @@ public class CodesDatabase extends SQLiteOpenHelper {
 
     public String ExportToCSV()
     {
-        File exportDir = new File(Environment.getExternalStorageDirectory(), "");
+        File exportDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "");
         if (!exportDir.exists())
         {
-            exportDir.mkdirs();
+            if (!exportDir.mkdirs())
+            {
+                Log.e("BRC", "Directory not created");
+                return "Directory not created";
+            }
         }
         File file = new File(exportDir, "codes.csv");
         try
@@ -147,5 +154,36 @@ public class CodesDatabase extends SQLiteOpenHelper {
         }
 
         return "Exported to " + file.getAbsolutePath();
+    }
+
+    public String ImportFromCSV()
+    {
+        File exportDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "");
+        if (!exportDir.exists())
+        {
+            return "Directory " + exportDir.getAbsolutePath() + " did not exist";
+        }
+
+        File file = new File(exportDir, "codes.csv");
+        try
+        {
+            FileReader fileReader = new FileReader(file);
+            CSVReader csvReader = new CSVReader(fileReader);
+            String [] nextLine;
+
+            while ((nextLine = csvReader.readNext()) != null) {
+                try {
+                    Integer.parseInt(nextLine[0]);
+                    AddNewCode(nextLine[1], nextLine[2], nextLine[3], nextLine[4]);
+                } catch(NumberFormatException nfe) {
+                }             }
+        }
+        catch(Exception ex)
+        {
+            Log.e("BRC", ex.getMessage(), ex);
+            return ex.getMessage();
+        }
+
+        return "Imported from " + file.getAbsolutePath();
     }
 }
